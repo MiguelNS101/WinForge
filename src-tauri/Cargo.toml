@@ -1,0 +1,56 @@
+[package]
+name = "winforge"
+version = "1.0.0"
+description = "WinForge — Provisionador Universal Pós-Formatação & Suíte Nativa Windows 11 (Tauri v2 Portable)"
+authors = ["WinForge"]
+edition = "2021"
+
+[lib]
+name = "winforge_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-shell = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+walkdir = "2"
+sysinfo = "0.31"
+arboard = "3"
+global-hotkey = "0.6"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp"] }
+chrono = { version = "0.4", features = ["clock"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "blocking", "json"] }
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.52"
+windows = { version = "0.58", features = [
+    "Win32_Foundation",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_Shell",
+    "Win32_Graphics_Gdi",
+    "Win32_System_Power",
+    "Win32_System_Threading",
+    "Win32_System_Console",
+    "Win32_Storage_Packaging_Appx",
+    "Media_Ocr",
+    "Graphics_Imaging",
+    "Storage_Streams",
+    "Globalization",
+    "Foundation",
+    "Foundation_Collections",
+] }
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

@@ -1,0 +1,19 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+# Tauri / Rust build artifacts
+src-tauri/target/
+src-tauri/gen/schemas/
+release-artifacts/
+
+# WinForge local HARVEST & runtime outputs (NEVER commit vault/!)
+vault/
+WinForge_Bundle*/
+failed_report.json
+manual_apps_report.md

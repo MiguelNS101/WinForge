@@ -1,0 +1,72 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Default capability permissions for WinForge main card and transparent OCR/Mouse overlays",
+  "windows": ["main", "ocr-overlay", "mouse-overlay"],
+  "permissions": [
+    "core:default",
+    "core:event:default",
+    "core:event:allow-listen",
+    "core:event:allow-unlisten",
+    "core:event:allow-emit",
+    "core:event:allow-emit-to",
+    "core:window:default",
+    "core:window:allow-create",
+    "core:window:allow-close",
+    "core:window:allow-destroy",
+    "core:window:allow-minimize",
+    "core:window:allow-unminimize",
+    "core:window:allow-hide",
+    "core:window:allow-show",
+    "core:window:allow-set-focus",
+    "core:window:allow-start-dragging",
+    "core:window:allow-set-always-on-top",
+    "core:window:allow-set-ignore-cursor-events",
+    "core:window:allow-set-fullscreen",
+    "core:window:allow-set-decorations",
+    "core:window:allow-outer-position",
+    "core:window:allow-scale-factor",
+    "core:webview:allow-create-webview-window",
+    "core:tray:default",
+    "core:menu:default",
+    "dialog:default",
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "fs:default",
+    "fs:allow-read-text-file",
+    "fs:allow-write-text-file",
+    "fs:allow-exists",
+    "fs:allow-mkdir",
+    "fs:allow-copy-file",
+    "fs:allow-remove",
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        "$HOME/**",
+        "$APPDATA/**",
+        "$LOCALAPPDATA/**",
+        "$DOCUMENT/**",
+        "$DESKTOP/**",
+        "$TEMP/**"
+      ]
+    },
+    "shell:default",
+    "shell:allow-open",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        { "name": "powershell", "cmd": "powershell", "args": true },
+        { "name": "winget", "cmd": "winget", "args": true },
+        { "name": "cmd", "cmd": "cmd", "args": true },
+        { "name": "sc", "cmd": "sc.exe", "args": true },
+        { "name": "netsh", "cmd": "netsh", "args": true },
+        { "name": "ipconfig", "cmd": "ipconfig", "args": true },
+        { "name": "sfc", "cmd": "sfc.exe", "args": true },
+        { "name": "pnputil", "cmd": "pnputil.exe", "args": true },
+        { "name": "schtasks", "cmd": "schtasks.exe", "args": true },
+        { "name": "git", "cmd": "git", "args": true },
+        { "name": "reg", "cmd": "reg.exe", "args": true }
+      ]
+    }
+  ]
+}

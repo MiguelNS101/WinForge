@@ -1,0 +1,176 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --color-ctp-base: #1e1e2e;
+  --color-ctp-mantle: #181825;
+  --color-ctp-crust: #11111b;
+  --color-ctp-surface0: #313244;
+  --color-ctp-surface1: #45475a;
+  --color-ctp-surface2: #585b70;
+  --color-ctp-overlay0: #6c7086;
+  --color-ctp-overlay1: #7f849c;
+  --color-ctp-subtext0: #a6adc8;
+  --color-ctp-subtext1: #bac2de;
+  --color-ctp-text: #cdd6f4;
+  --color-ctp-mauve: #cba6f7;
+  --color-ctp-peach: #fab387;
+  --color-ctp-green: #a6e3a1;
+  --color-ctp-red: #f38ba8;
+  --color-ctp-blue: #89b4fa;
+  --color-ctp-yellow: #f9e2af;
+  --color-ctp-teal: #94e2d5;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+    background-color: #11111b;
+    color: #cdd6f4;
+    font-family: var(--font-sans);
+    letter-spacing: 0.01em;
+    overflow: hidden;
+  }
+
+  html.overlay-mode,
+  html.overlay-mode body,
+  html.overlay-mode #root {
+    background: transparent !important;
+    background-color: transparent !important;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #45475a #181825;
+  }
+
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: #181825;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: #313244;
+    border: 1px solid #181825;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: #45475a;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.tui-chamfer {
+  clip-path: polygon(
+    0 0,
+    calc(100% - 7px) 0,
+    100% 7px,
+    100% 100%,
+    0 100%
+  );
+}
+
+/* Minimalist monochrome single-line cat squish boot animation */
+@keyframes cat-squish {
+  0%,
+  100% {
+    transform: translateY(0px) scaleX(1) scaleY(1);
+  }
+  20% {
+    transform: translateY(4px) scaleX(1.14) scaleY(0.84);
+  }
+  44% {
+    transform: translateY(-7px) scaleX(0.91) scaleY(1.11);
+  }
+  64% {
+    transform: translateY(2px) scaleX(1.06) scaleY(0.93);
+  }
+  80% {
+    transform: translateY(-1px) scaleX(0.98) scaleY(1.02);
+  }
+}
+
+@keyframes cat-shadow {
+  0%,
+  100% {
+    transform: scaleX(1);
+    opacity: 0.45;
+  }
+  20% {
+    transform: scaleX(1.18);
+    opacity: 0.65;
+  }
+  44% {
+    transform: scaleX(0.78);
+    opacity: 0.25;
+  }
+  64% {
+    transform: scaleX(1.07);
+    opacity: 0.52;
+  }
+}
+
+@keyframes cat-tail-wag {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  35% {
+    transform: rotate(9deg);
+  }
+  70% {
+    transform: rotate(-7deg);
+  }
+}
+
+@keyframes cat-blink {
+  0%,
+  44%,
+  50%,
+  100% {
+    transform: scaleY(1);
+  }
+  47% {
+    transform: scaleY(0.12);
+  }
+}
+
+.animate-cat-squish {
+  transform-origin: center 84%;
+  animation: cat-squish 1.55s cubic-bezier(0.36, 0.07, 0.19, 0.97) infinite;
+}
+
+.animate-cat-shadow {
+  transform-origin: center center;
+  animation: cat-shadow 1.55s cubic-bezier(0.36, 0.07, 0.19, 0.97) infinite;
+}
+
+.animate-cat-tail {
+  transform-origin: 76px 76px;
+  animation: cat-tail-wag 2.1s ease-in-out infinite;
+}
+
+.animate-cat-blink {
+  transform-origin: center 50px;
+  animation: cat-blink 3.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-cat-squish,
+  .animate-cat-shadow,
+  .animate-cat-tail,
+  .animate-cat-blink {
+    animation: none;
+  }
+}

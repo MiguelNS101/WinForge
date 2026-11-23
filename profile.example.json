@@ -1,0 +1,87 @@
+{
+  "profile_name": "Setup Windows 11",
+  "author": "User",
+  "create_restore_point": true,
+  "system_tweaks": [
+    {
+      "id": "show_ext",
+      "label": "Mostrar extensões de arquivos no Explorer",
+      "enabled": true,
+      "command": "Set-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced' -Name 'HideFileExt' -Value 0"
+    },
+    {
+      "id": "show_hidden",
+      "label": "Exibir arquivos e pastas ocultas",
+      "enabled": true,
+      "command": "Set-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced' -Name 'Hidden' -Value 1"
+    },
+    {
+      "id": "dark_mode",
+      "label": "Ativar Modo Escuro global (Apps & Sistema)",
+      "enabled": true,
+      "command": "Set-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize' -Name 'AppsUseLightTheme' -Value 0; Set-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize' -Name 'SystemUsesLightTheme' -Value 0"
+    }
+  ],
+  "external_scripts": [],
+  "winget_packages": [
+    {
+      "id": "Git.Git",
+      "name": "Git",
+      "category": "Dev & Terminal",
+      "enabled": true
+    },
+    {
+      "id": "Microsoft.WindowsTerminal",
+      "name": "Windows Terminal",
+      "category": "Dev & Terminal",
+      "enabled": true
+    },
+    {
+      "id": "Microsoft.VisualStudioCode",
+      "name": "Visual Studio Code",
+      "category": "Dev & Terminal",
+      "enabled": true
+    },
+    {
+      "id": "7zip.7zip",
+      "name": "7-Zip",
+      "category": "Utilitários",
+      "enabled": true
+    }
+  ],
+  "dotfiles": {
+    "repo_url": "",
+    "mappings": []
+  },
+  "registry_files": [],
+  "bundle_root": "./WinForge_Bundle",
+  "vault_items": [
+    {
+      "id": "ssh_keys",
+      "label": "Chaves SSH (~/.ssh)",
+      "source_path": "%USERPROFILE%\\.ssh",
+      "bundle_subpath": "vault/ssh",
+      "enabled": true
+    },
+    {
+      "id": "gitconfig",
+      "label": "Git Config (~/.gitconfig)",
+      "source_path": "%USERPROFILE%\\.gitconfig",
+      "bundle_subpath": "vault/gitconfig",
+      "enabled": true
+    },
+    {
+      "id": "npmrc",
+      "label": "NPM Config (~/.npmrc)",
+      "source_path": "%USERPROFILE%\\.npmrc",
+      "bundle_subpath": "vault/npmrc",
+      "enabled": true
+    }
+  ],
+  "vscode_extensions": [],
+  "portable_apps": [],
+  "backup_wifi": true,
+  "backup_drivers": false,
+  "extra_save_paths": [],
+  "autostart_tasks": []
+}

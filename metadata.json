@@ -1,0 +1,6 @@
+{
+  "name": "WinForge",
+  "description": "Data-driven Windows 11 post-format provisioning tool built for Tauri v2 with Catppuccin TUI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

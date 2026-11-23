@@ -1,0 +1,219 @@
+name: Build & Release WinForge Portable (Windows x64)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Tag da release (ex: v1.0.0). Deixe vazio para apenas gerar artefato de build.'
+        required: false
+        default: ''
+      prerelease:
+        description: 'Marcar como pre-release no GitHub'
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-portable-windows:
+    name: Build Portable Windows x64 (.exe + .zip)
+    runs-on: windows-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Rust stable (x86_64-pc-windows-msvc)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Cache Rust build artifacts
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Resolve release tag and version
+        id: meta
+        shell: pwsh
+        run: |
+          $tag = ""
+          if ("${{ github.event_name }}" -eq "push" -and "${{ github.ref }}".StartsWith("refs/tags/")) {
+            $tag = "${{ github.ref_name }}"
+          } elseif ("${{ inputs.release_tag }}".Trim() -ne "") {
+            $tag = "${{ inputs.release_tag }}".Trim()
+          }
+
+          if ($tag -ne "") {
+            $semver = $tag -replace '^v', ''
+            $publish = "true"
+          } else {
+            $pkg = Get-Content -Raw package.json | ConvertFrom-Json
+            $semver = $pkg.version
+            $tag = "v$semver-build-${{ github.run_number }}"
+            $publish = "false"
+          }
+
+          # Ensure valid Cargo/Tauri semver (X.Y.Z)
+          if ($semver -notmatch '^\d+\.\d+\.\d+') {
+            $semver = "1.0.0"
+          }
+
+          "tag=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "version=$semver" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "publish=$publish" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Resolved Tag: $tag | Version: $semver | Publish Release: $publish"
+
+      - name: Sync version across package.json, tauri.conf.json, and Cargo.toml
+        shell: pwsh
+        run: |
+          $ver = "${{ steps.meta.outputs.version }}"
+          # package.json
+          $pkgRaw = Get-Content -Raw package.json
+          $pkgRaw = $pkgRaw -replace '"version"\s*:\s*"[^"]+"', "`"version`": `"$ver`""
+          Set-Content -Path package.json -Value $pkgRaw -NoNewline
+
+          # src-tauri/tauri.conf.json
+          $tauriRaw = Get-Content -Raw src-tauri/tauri.conf.json
+          $tauriRaw = $tauriRaw -replace '"version"\s*:\s*"[^"]+"', "`"version`": `"$ver`""
+          Set-Content -Path src-tauri/tauri.conf.json -Value $tauriRaw -NoNewline
+
+          # src-tauri/Cargo.toml (only package version line)
+          $cargoLines = Get-Content src-tauri/Cargo.toml
+          $inPackage = $false
+          $updatedCargo = foreach ($line in $cargoLines) {
+            if ($line -match '^\[package\]') { $inPackage = $true }
+            elseif ($line -match '^\[') { $inPackage = $false }
+            if ($inPackage -and $line -match '^version\s*=') {
+              "version = `"$ver`""
+            } else {
+              $line
+            }
+          }
+          Set-Content -Path src-tauri/Cargo.toml -Value $updatedCargo
+
+      - name: Install frontend dependencies
+        shell: pwsh
+        run: |
+          if (Test-Path package-lock.json) {
+            npm ci
+          } else {
+            npm install
+          }
+
+      - name: Type-check frontend (tsc --noEmit)
+        shell: pwsh
+        run: npm run lint
+
+      - name: Build Tauri v2 Portable Executable (no installer bundle)
+        shell: pwsh
+        env:
+          TAURI_CLI_NO_DEV_SERVER_WAIT: 'true'
+        run: npx tauri build --no-bundle --target x86_64-pc-windows-msvc
+
+      - name: Package Portable Release (.exe, .zip, SHA256SUMS.txt)
+        shell: pwsh
+        run: |
+          $tag = "${{ steps.meta.outputs.tag }}"
+          $exeSource = "src-tauri/target/x86_64-pc-windows-msvc/release/winforge.exe"
+
+          if (-not (Test-Path $exeSource)) {
+            throw "Executavel portatil nao encontrado em: $exeSource"
+          }
+
+          $outDir = "release-artifacts"
+          $portableStage = Join-Path $outDir "WinForge-Portable"
+          New-Item -ItemType Directory -Force -Path $portableStage | Out-Null
+
+          $standaloneName = "WinForge-$tag-windows-x64-portable.exe"
+          $zipName = "WinForge-$tag-windows-x64-portable.zip"
+
+          # 1. Standalone portable .exe
+          Copy-Item -Path $exeSource -Destination (Join-Path $outDir $standaloneName)
+
+          # 2. Portable bundle folder -> .zip
+          Copy-Item -Path $exeSource -Destination (Join-Path $portableStage "WinForge.exe")
+          if (Test-Path "profile.example.json") {
+            Copy-Item -Path "profile.example.json" -Destination (Join-Path $portableStage "profile.example.json")
+          }
+
+          $readmeText = @"
+          WinForge $tag — Versao Portatil (Windows 11 x64)
+          =================================================
+
+          Como usar (100% Portatil, sem instalacao):
+          1. Extraia o conteudo deste ZIP para um pendrive ou pasta local (ex: D:\WinForge).
+          2. Opcional: renomeie 'profile.example.json' para 'profile.json' ao lado do WinForge.exe
+             para carregar seu manifesto automaticamente ao iniciar.
+          3. Execute 'WinForge.exe' (solicitara elevacao UAC de Administrador automaticamente).
+          4. Antes de formatar: use a aba [00] HARVEST (PRE-FORMAT) para gerar o bundle portatil.
+          5. Apos formatar: importe seu profile.json, teste com DRY-RUN MODE se desejar e clique em
+             EXECUTE PROVISIONING.
+
+          Aviso de Seguranca:
+          - Nunca suba a pasta 'vault/' gerada pelo HARVEST para repositorios publicos.
+          - Requisito: Microsoft Edge WebView2 Runtime (ja incluido nativamente no Windows 11).
+          "@
+          Set-Content -Path (Join-Path $portableStage "README-PORTABLE.txt") -Value $readmeText -Encoding UTF8
+
+          Compress-Archive -Path "$portableStage\*" -DestinationPath (Join-Path $outDir $zipName) -Force
+          Remove-Item -Recurse -Force $portableStage
+
+          # 3. SHA256 Checksums
+          $hashes = @()
+          foreach ($file in @($standaloneName, $zipName)) {
+            $fullPath = Join-Path $outDir $file
+            $hash = (Get-FileHash -Path $fullPath -Algorithm SHA256).Hash.ToLower()
+            $hashes += "$hash  $file"
+          }
+          Set-Content -Path (Join-Path $outDir "SHA256SUMS.txt") -Value ($hashes -join "`n") -Encoding ASCII
+
+          Get-ChildItem $outDir | Format-Table Name, Length
+
+      - name: Upload Portable Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: WinForge-${{ steps.meta.outputs.tag }}-windows-x64-portable
+          path: |
+            release-artifacts/*.exe
+            release-artifacts/*.zip
+            release-artifacts/SHA256SUMS.txt
+          retention-days: 30
+
+      - name: Create GitHub Release (Portable Windows x64)
+        if: steps.meta.outputs.publish == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: WinForge ${{ steps.meta.outputs.tag }} (Windows x64 Portable)
+          prerelease: ${{ inputs.prerelease == true }}
+          generate_release_notes: true
+          body: |
+            ## WinForge ${{ steps.meta.outputs.tag }} — Versão Portátil (Windows 11 x64)
+
+            Binário único compilado em **Tauri v2 + Rust** com manifesto UAC (`requireAdministrator`) embutido — não requer instalação.
+
+            ### Arquivos desta Release
+            - **`WinForge-${{ steps.meta.outputs.tag }}-windows-x64-portable.zip`**: Pacote portátil completo (`WinForge.exe` + `profile.example.json` + guia rápido).
+            - **`WinForge-${{ steps.meta.outputs.tag }}-windows-x64-portable.exe`**: Executável avulso pronto para pendrive.
+            - **`SHA256SUMS.txt`**: Checksums SHA-256 para verificação de integridade.
+
+            ### Uso Rápido
+            1. Coloque `WinForge.exe` (e opcionalmente seu `profile.json`) em um pendrive ou pasta local.
+            2. Execute `WinForge.exe` e aceite a elevação UAC.
+            3. Use **`[00] HARVEST (PRE-FORMAT)`** antes de formatar ou **`EXECUTE PROVISIONING`** após formatar.
+          files: |
+            release-artifacts/*.exe
+            release-artifacts/*.zip
+            release-artifacts/SHA256SUMS.txt
