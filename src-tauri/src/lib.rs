@@ -339,7 +339,7 @@ fn is_user_admin_native() -> bool {
 }
 
 #[tauri::command]
-pub fn check_admin() -> bool {
+fn check_admin() -> bool {
     is_user_admin_native()
 }
 
@@ -607,7 +607,7 @@ fn is_winget_package_installed(pkg_id: &str) -> bool {
 // ============================================================================
 
 #[tauri::command]
-pub fn abort_provisioning(app: AppHandle, state: State<'_, ProvisionState>) {
+fn abort_provisioning(app: AppHandle, state: State<'_, ProvisionState>) {
     if state.is_running.load(Ordering::Relaxed) {
         state.cancel_flag.store(true, Ordering::Relaxed);
         let sink = EventSink::Tauri(app);
@@ -621,7 +621,7 @@ pub fn abort_provisioning(app: AppHandle, state: State<'_, ProvisionState>) {
 }
 
 #[tauri::command]
-pub async fn run_provisioning(
+async fn run_provisioning(
     app: AppHandle,
     state: State<'_, ProvisionState>,
     profile: ProfileConfig,
@@ -3189,7 +3189,7 @@ fn scan_startup_shortcuts(app: &EventSink) -> Vec<AutostartTask> {
 /// Standalone Tauri command to scan `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup`
 /// and return suggested `AutostartTask` entries on demand.
 #[tauri::command]
-pub async fn scan_startup_tasks(app: AppHandle) -> Result<Vec<AutostartTask>, String> {
+async fn scan_startup_tasks(app: AppHandle) -> Result<Vec<AutostartTask>, String> {
     let sink = EventSink::Tauri(app);
     tauri::async_runtime::spawn_blocking(move || scan_startup_shortcuts(&sink))
         .await
@@ -3199,7 +3199,7 @@ pub async fn scan_startup_tasks(app: AppHandle) -> Result<Vec<AutostartTask>, St
 /// Standalone Tauri command to schedule enabled `autostart_tasks` immediately via
 /// `schtasks /create /sc onlogon` (respecting `run_as_admin` -> `/rl highest`).
 #[tauri::command]
-pub async fn deploy_autostart_tasks(
+async fn deploy_autostart_tasks(
     app: AppHandle,
     tasks: Vec<AutostartTask>,
 ) -> Result<usize, String> {
@@ -3254,7 +3254,7 @@ pub async fn deploy_autostart_tasks(
 }
 
 #[tauri::command]
-pub async fn scan_current_system(app: AppHandle) -> Result<ProfileConfig, String> {
+async fn scan_current_system(app: AppHandle) -> Result<ProfileConfig, String> {
     let sink = EventSink::Tauri(app);
 
     tauri::async_runtime::spawn_blocking(move || {
@@ -3870,7 +3870,7 @@ fn sanitize_folder_slug(raw: &str, fallback: &str) -> String {
 }
 
 #[tauri::command]
-pub async fn run_harvest(
+async fn run_harvest(
     app: AppHandle,
     state: State<'_, ProvisionState>,
     output_dir: String,
@@ -4375,7 +4375,7 @@ fn execute_harvest_pipeline(
 
 /// Reads and deserializes any WinForge profile JSON (such as `failed_report.json`) from disk.
 #[tauri::command]
-pub fn read_profile_file(path: String) -> Result<ProfileConfig, String> {
+fn read_profile_file(path: String) -> Result<ProfileConfig, String> {
     let resolved = resolve_windows_env_vars(path.trim());
     let file_path = PathBuf::from(&resolved);
     let raw = fs::read_to_string(&file_path)
@@ -4387,7 +4387,7 @@ pub fn read_profile_file(path: String) -> Result<ProfileConfig, String> {
 /// Portable startup auto-loader: checks for `profile.json` next to `WinForge.exe`
 /// (or in the current working directory) and returns it if present.
 #[tauri::command]
-pub fn load_startup_profile() -> Result<Option<ProfileConfig>, String> {
+fn load_startup_profile() -> Result<Option<ProfileConfig>, String> {
     let mut candidates: Vec<PathBuf> = Vec::new();
     if let Ok(exe_path) = env::current_exe() {
         if let Some(exe_dir) = exe_path.parent() {
@@ -4768,7 +4768,7 @@ fn run_winget_capture(args: &[&str]) -> Result<String, String> {
 }
 
 #[tauri::command]
-pub async fn winget_check_updates(app: AppHandle) -> Result<Vec<WingetUpdateItem>, String> {
+async fn winget_check_updates(app: AppHandle) -> Result<Vec<WingetUpdateItem>, String> {
     tauri::async_runtime::spawn_blocking(move || {
         let sink = EventSink::Tauri(app);
         emit_log(
@@ -4823,7 +4823,7 @@ pub async fn winget_check_updates(app: AppHandle) -> Result<Vec<WingetUpdateItem
 }
 
 #[tauri::command]
-pub async fn winget_upgrade_packages(
+async fn winget_upgrade_packages(
     app: AppHandle,
     state: State<'_, ProvisionState>,
     ids: Vec<String>,
@@ -4950,7 +4950,7 @@ pub async fn winget_upgrade_packages(
 }
 
 #[tauri::command]
-pub async fn winget_search(app: AppHandle, query: String) -> Result<Vec<WingetSearchItem>, String> {
+async fn winget_search(app: AppHandle, query: String) -> Result<Vec<WingetSearchItem>, String> {
     let trimmed = query.trim().to_string();
     if trimmed.is_empty() {
         return Ok(Vec::new());
@@ -5013,7 +5013,7 @@ pub async fn winget_search(app: AppHandle, query: String) -> Result<Vec<WingetSe
 }
 
 #[tauri::command]
-pub async fn winget_install_package(
+async fn winget_install_package(
     app: AppHandle,
     state: State<'_, ProvisionState>,
     id: String,
@@ -5098,7 +5098,7 @@ pub async fn winget_install_package(
 }
 
 #[tauri::command]
-pub async fn winget_list_installed(app: AppHandle) -> Result<Vec<WingetInstalledItem>, String> {
+async fn winget_list_installed(app: AppHandle) -> Result<Vec<WingetInstalledItem>, String> {
     tauri::async_runtime::spawn_blocking(move || {
         let sink = EventSink::Tauri(app);
         emit_log(&sink, "INFO", 2, "UniGet Mode: listando pacotes instalados (winget list)...");
@@ -5148,7 +5148,7 @@ pub async fn winget_list_installed(app: AppHandle) -> Result<Vec<WingetInstalled
 }
 
 #[tauri::command]
-pub async fn winget_uninstall_package(
+async fn winget_uninstall_package(
     app: AppHandle,
     state: State<'_, ProvisionState>,
     id: String,
@@ -5231,7 +5231,7 @@ pub async fn winget_uninstall_package(
 /// Persists updated `profile.json` back to disk when a portable profile already exists
 /// in `bundle_root` or alongside `WinForge.exe`.
 #[tauri::command]
-pub fn save_profile_to_disk(profile: ProfileConfig) -> Result<Option<String>, String> {
+fn save_profile_to_disk(profile: ProfileConfig) -> Result<Option<String>, String> {
     let mut target: Option<PathBuf> = None;
 
     if let Some(ref b_root) = profile.bundle_root {
@@ -5416,7 +5416,7 @@ fn run_git_sync_commit_push(
 }
 
 #[tauri::command]
-pub async fn sync_dotfiles_reverse(
+async fn sync_dotfiles_reverse(
     app: AppHandle,
     state: State<'_, ProvisionState>,
     profile: ProfileConfig,
@@ -5781,7 +5781,7 @@ fn decode_console_line_bytes(bytes: &[u8]) -> String {
 }
 
 #[tauri::command]
-pub async fn run_quick_maintenance(
+async fn run_quick_maintenance(
     app: AppHandle,
     state: State<'_, ProvisionState>,
     action: String,
